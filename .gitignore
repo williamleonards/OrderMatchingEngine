@@ -55,3 +55,6 @@ cmake-build-debug/**
 *.exe
 *.out
 *.app
+
+# Others
+.DS_Store
