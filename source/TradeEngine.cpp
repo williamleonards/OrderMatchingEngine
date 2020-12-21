@@ -31,12 +31,7 @@ int TradeEngine::createUser(string name) {
     return nextUserID - 1;
 }
 vector<Trade*> TradeEngine::placeBuyOrder(int issuerID, int price, int amt) {
-    // acquire user lock
     User *user = users[issuerID];
-    // release user lock
-
-    // acquire buy lock
-    // acquire sell lock
     vector<Trade*> ans;
     if (user == NULL) {
         cout << "User ID not known" << endl;
@@ -47,8 +42,6 @@ vector<Trade*> TradeEngine::placeBuyOrder(int issuerID, int price, int amt) {
     if (remaining > 0) { // put surplus amount on buy tree
         putRemainingOrderOnTree(true, user, price, remaining);
     }
-    // release sell lock
-    // release buy lock
     return ans;
 }
 vector<Trade*> TradeEngine::placeSellOrder(int issuerID, int price, int amt) {
@@ -66,7 +59,6 @@ vector<Trade*> TradeEngine::placeSellOrder(int issuerID, int price, int amt) {
     return ans;
 }
 void TradeEngine::deleteOrder(int issuerID, int orderID) { //lazy deletion
-
     User *user = users[issuerID];
     if (user == NULL) {
         cout << "User ID not known" << endl;

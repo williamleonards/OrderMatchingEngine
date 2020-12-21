@@ -13,7 +13,6 @@ using namespace std;
 #include<list>
 #include<unordered_map>
 #include<map>
-#include<pthread.h>
 
 #include "Order.h"
 #include "Trade.h"
@@ -57,9 +56,6 @@ public:
     // Gets the sell history of the user with id `userID`. Returns a vector of trades involving the user as the seller.
     vector<Trade*>* getSellTrades(int userID);
 private:
-    pthread_mutex_t treesLock;
-    pthread_mutex_t usersLock;
-
     unordered_map<int, User*> users;
     int nextUserID;
 
