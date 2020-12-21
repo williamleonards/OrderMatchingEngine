@@ -1,4 +1,4 @@
-# TradeMatcher
+# OrderMatchingEngine
 
 ## About
 A simple implementation of an order matching engine. Supports buy/sell orders with integer amounts (volume). The engine matches any incoming order with pre-existing ones, creating trades that follow the prices of pre-existing orders.
@@ -52,7 +52,7 @@ make
 ```
 Run the executable:
 ```bash
-./TradeMatcher
+./OrderMatchingEngine
 ```
 All testcases will be run, producing the following output:
 ```bash
