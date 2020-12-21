@@ -11,11 +11,19 @@ TradeEngine::TradeEngine() {
     pthread_mutex_init(&buyLock, NULL);
     pthread_mutex_init(&sellLock, NULL);
 }
+// delete all pending orders, all trades are deleted in ~User()
 TradeEngine::~TradeEngine() {
     for (auto p : users) {
         delete p.second;
     }
     for (auto p : sellTree) {
+        list<Order*> *lst = p.second->second;
+        for (Order *ord : *lst) {
+            delete ord;
+        }
+        delete p.second;
+    }
+    for (auto p : buyTree) {
         list<Order*> *lst = p.second->second;
         for (Order *ord : *lst) {
             delete ord;
@@ -79,31 +87,37 @@ vector<Trade*> TradeEngine::placeSellOrder(int issuerID, int price, int amt) {
 }
 void TradeEngine::deleteOrder(int issuerID, int orderID) { //lazy deletion
     pthread_mutex_lock(&usersLock);
+    pthread_mutex_lock(&buyLock);
+    pthread_mutex_lock(&sellLock);
     User *user = users[issuerID];
-    pthread_mutex_unlock(&usersLock);
     if (user == NULL) {
-        cout << "User ID not known" << endl;
+        pthread_mutex_unlock(&sellLock);
+        pthread_mutex_unlock(&buyLock);
+        pthread_mutex_unlock(&usersLock);
         return;
     }
     unordered_map<int, Order*> *userOrders = (user->getOrders());
-    Order *order = userOrders->at(orderID);
-    if (order == NULL) {
-        cout << "Order ID not known" << endl;
+    if (userOrders->count(orderID) == 0) {
+        pthread_mutex_unlock(&sellLock);
+        pthread_mutex_unlock(&buyLock);
+        pthread_mutex_unlock(&usersLock);
         return;
     }
+    Order *order = userOrders->at(orderID);
     int price = order->getPrice();
-    // acquire buy/sell lock depending on order type
-    pthread_mutex_lock(order->getType() ? &buyLock : &sellLock);
     pair<int, list<Order*>*> *p = order->getType() ? buyTree[price] : sellTree[price];
     if (p == NULL) {
-        cout << "Heap incorrectly configured!, type = " << order->getType() << endl;
+        pthread_mutex_unlock(&sellLock);
+        pthread_mutex_unlock(&buyLock);
+        pthread_mutex_unlock(&usersLock);
         return;
     }
     p->first -= order->getAmt();
     order->setInvalid();
-    // release buy/sell lock depending on order type
-    pthread_mutex_unlock(order->getType() ? &buyLock : &sellLock);
     userOrders->erase(orderID);
+    pthread_mutex_unlock(&sellLock);
+    pthread_mutex_unlock(&buyLock);
+    pthread_mutex_unlock(&usersLock);
 }
 vector<pair<int, int>> TradeEngine::getPendingBuys() {
     pthread_mutex_lock(&buyLock);
@@ -134,7 +148,6 @@ vector<pair<int, int>> TradeEngine::getPendingSells() {
 vector<Order*> TradeEngine::getPendingOrders(int userID) {
     pthread_mutex_lock(&usersLock);
     User *user = users[userID];
-    pthread_mutex_unlock(&usersLock);
     vector<Order*> ans;
     if (user == NULL) {
         cout << "User ID not known" << endl;
@@ -144,13 +157,13 @@ vector<Order*> TradeEngine::getPendingOrders(int userID) {
     for (auto itr = orders->begin(); itr != orders->end(); itr++) {
         ans.push_back(itr->second);
     }
+    pthread_mutex_unlock(&usersLock);
     return ans;
 }
 vector<Trade*>* TradeEngine::getBuyTrades(int userID) {
     pthread_mutex_lock(&usersLock);
     User *user = users[userID];
     pthread_mutex_unlock(&usersLock);
-    vector<Trade*> ans;
     if (user == NULL) {
         cout << "User ID not known" << endl;
         return nullptr;
@@ -161,7 +174,6 @@ vector<Trade*>* TradeEngine::getSellTrades(int userID) {
     pthread_mutex_lock(&usersLock);
     User *user = users[userID];
     pthread_mutex_unlock(&usersLock);
-    vector<Trade*> ans;
     if (user == NULL) {
         cout << "User ID not known" << endl;
         return nullptr;
