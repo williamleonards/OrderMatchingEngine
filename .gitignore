@@ -1,5 +1,5 @@
 # Executable output
-TradeMatcher
+OrderMatchingEngine
 
 ### CMake ###
 CMakeLists.txt.user
