@@ -7,6 +7,9 @@
 
 TradeEngine::TradeEngine() {
     nextUserID = 0;
+    pthread_mutex_init(&usersLock, NULL);
+    pthread_mutex_init(&buyLock, NULL);
+    pthread_mutex_init(&sellLock, NULL);
 }
 TradeEngine::~TradeEngine() {
     for (auto p : users) {
@@ -21,6 +24,7 @@ TradeEngine::~TradeEngine() {
     }
 }
 int TradeEngine::createUser(string name) {
+    pthread_mutex_lock(&usersLock);
     User *user = new User(nextUserID, name);
     users[nextUserID] = user;
     if (nextUserID == (1 << 31) - 1) {
@@ -28,10 +32,16 @@ int TradeEngine::createUser(string name) {
         return -1;
     }
     nextUserID++;
-    return nextUserID - 1;
+    int ans = nextUserID - 1;
+    pthread_mutex_unlock(&usersLock);
+    return ans;
 }
 vector<Trade*> TradeEngine::placeBuyOrder(int issuerID, int price, int amt) {
+    pthread_mutex_lock(&usersLock);
+    pthread_mutex_lock(&buyLock);
+    pthread_mutex_lock(&sellLock);
     User *user = users[issuerID];
+
     vector<Trade*> ans;
     if (user == NULL) {
         cout << "User ID not known" << endl;
@@ -42,9 +52,15 @@ vector<Trade*> TradeEngine::placeBuyOrder(int issuerID, int price, int amt) {
     if (remaining > 0) { // put surplus amount on buy tree
         putRemainingOrderOnTree(true, user, price, remaining);
     }
+    pthread_mutex_unlock(&sellLock);
+    pthread_mutex_unlock(&buyLock);
+    pthread_mutex_unlock(&usersLock);
     return ans;
 }
 vector<Trade*> TradeEngine::placeSellOrder(int issuerID, int price, int amt) {
+    pthread_mutex_lock(&usersLock);
+    pthread_mutex_lock(&buyLock);
+    pthread_mutex_lock(&sellLock);
     User *user = users[issuerID];
     vector<Trade*> ans;
     if (user == NULL) {
@@ -56,10 +72,15 @@ vector<Trade*> TradeEngine::placeSellOrder(int issuerID, int price, int amt) {
     if (remaining > 0) { // put surplus amount on sell tree
         putRemainingOrderOnTree(false, user, price, remaining);
     }
+    pthread_mutex_unlock(&sellLock);
+    pthread_mutex_unlock(&buyLock);
+    pthread_mutex_unlock(&usersLock);
     return ans;
 }
 void TradeEngine::deleteOrder(int issuerID, int orderID) { //lazy deletion
+    pthread_mutex_lock(&usersLock);
     User *user = users[issuerID];
+    pthread_mutex_unlock(&usersLock);
     if (user == NULL) {
         cout << "User ID not known" << endl;
         return;
@@ -71,6 +92,8 @@ void TradeEngine::deleteOrder(int issuerID, int orderID) { //lazy deletion
         return;
     }
     int price = order->getPrice();
+    // acquire buy/sell lock depending on order type
+    pthread_mutex_lock(order->getType() ? &buyLock : &sellLock);
     pair<int, list<Order*>*> *p = order->getType() ? buyTree[price] : sellTree[price];
     if (p == NULL) {
         cout << "Heap incorrectly configured!, type = " << order->getType() << endl;
@@ -78,9 +101,12 @@ void TradeEngine::deleteOrder(int issuerID, int orderID) { //lazy deletion
     }
     p->first -= order->getAmt();
     order->setInvalid();
+    // release buy/sell lock depending on order type
+    pthread_mutex_unlock(order->getType() ? &buyLock : &sellLock);
     userOrders->erase(orderID);
 }
 vector<pair<int, int>> TradeEngine::getPendingBuys() {
+    pthread_mutex_lock(&buyLock);
     vector<pair<int, int>> v;
     for (auto itr = buyTree.rbegin(); itr != buyTree.rend(); itr++) {
         int price = itr->first;
@@ -89,9 +115,11 @@ vector<pair<int, int>> TradeEngine::getPendingBuys() {
             v.push_back(pair<int, int>(price, vol));
         }
     }
+    pthread_mutex_unlock(&buyLock);
     return v;
 }
 vector<pair<int, int>> TradeEngine::getPendingSells() {
+    pthread_mutex_lock(&sellLock);
     vector<pair<int, int>> v;
     for (auto itr = sellTree.begin(); itr != sellTree.end(); itr++) {
         int price = itr->first;
@@ -100,10 +128,13 @@ vector<pair<int, int>> TradeEngine::getPendingSells() {
             v.push_back(pair<int, int>(price, vol));
         }
     }
+    pthread_mutex_unlock(&sellLock);
     return v;
 }
 vector<Order*> TradeEngine::getPendingOrders(int userID) {
+    pthread_mutex_lock(&usersLock);
     User *user = users[userID];
+    pthread_mutex_unlock(&usersLock);
     vector<Order*> ans;
     if (user == NULL) {
         cout << "User ID not known" << endl;
@@ -116,7 +147,9 @@ vector<Order*> TradeEngine::getPendingOrders(int userID) {
     return ans;
 }
 vector<Trade*>* TradeEngine::getBuyTrades(int userID) {
+    pthread_mutex_lock(&usersLock);
     User *user = users[userID];
+    pthread_mutex_unlock(&usersLock);
     vector<Trade*> ans;
     if (user == NULL) {
         cout << "User ID not known" << endl;
@@ -125,7 +158,9 @@ vector<Trade*>* TradeEngine::getBuyTrades(int userID) {
     return user->getBought();
 }
 vector<Trade*>* TradeEngine::getSellTrades(int userID) {
+    pthread_mutex_lock(&usersLock);
     User *user = users[userID];
+    pthread_mutex_unlock(&usersLock);
     vector<Trade*> ans;
     if (user == NULL) {
         cout << "User ID not known" << endl;
@@ -133,7 +168,29 @@ vector<Trade*>* TradeEngine::getSellTrades(int userID) {
     }
     return user->getSold();
 }
-
+long long TradeEngine::getTotalVolume() {
+    long long totalVol = 0;
+    vector<pair<int, int>> buyTree = getPendingBuys();
+    vector<pair<int, int>> sellTree = getPendingSells();
+    for (int i = 0; i < buyTree.size(); i++) {
+        totalVol += buyTree[i].second;
+    }
+    for (int i = 0; i < sellTree.size(); i++) {
+        totalVol += sellTree[i].second;
+    }
+    for (auto itr = users.begin(); itr != users.end(); itr++) {
+        User *user = itr->second;
+        vector<Trade*> *bought = user->getBought();
+        for (int i = 0; i < bought->size(); i++) {
+            totalVol += bought->at(i)->getAmt();
+        }
+        vector<Trade*> *sold = user->getSold();
+        for (int i = 0; i < sold->size(); i++) {
+            totalVol += sold->at(i)->getAmt();
+        }
+    }
+    return totalVol;
+}
 // helper methods defined below
 bool TradeEngine::firstOrderIsStale(list<Order*> *lst) {
     Order *first = lst->front();
@@ -158,7 +215,6 @@ void TradeEngine::putRemainingOrderOnTree(bool buyOrSell, User *user, int price,
     }
 }
 vector<Trade*> TradeEngine::generateTrades(bool buyOrSell, int &price, int &issuerID, int &remaining) {
-    User *user = users[issuerID];
     vector<Trade*> ans;
     // generate trades when appropriate
     if (buyOrSell) {

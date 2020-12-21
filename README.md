@@ -1,4 +1,4 @@
-# OrderMatchingEngine
+# TradeMatcher
 
 ## About
 A simple implementation of an order matching engine. Supports buy/sell orders with integer amounts (volume). The engine matches any incoming order with pre-existing ones, creating trades that follow the prices of pre-existing orders.
@@ -38,6 +38,9 @@ Getting a user’s buy history: O(1). It returns a pointer to the vector of such
 
 Getting a user’s sell history: O(1). It returns a pointer to the vector of such trades.
 
+## Concurrency Support:
+This project supports concurrency using locks, with the assumption that no user appears in more than 1 thread. However, threads are allowed to create multiple users.
+
 ## Compiling and Executing
 Run CMake build:
 ```bash
@@ -49,7 +52,7 @@ make
 ```
 Run the executable:
 ```bash
-./OrderMatchingEngine
+./TradeMatcher
 ```
 All testcases will be run, producing the following output:
 ```bash
@@ -62,4 +65,5 @@ testBuyOut passed
 testSellOut passed
 testAll passed
 stressTest passed
+testTwoThreads passed
 ```

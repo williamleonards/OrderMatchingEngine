@@ -3,4 +3,4 @@ project(OrderMatchingEngine)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(OrderMatchingEngine source/main.cpp source/User.cpp source/User.h source/Order.cpp source/Order.h source/Trade.cpp source/Trade.h source/TradeEngine.cpp source/TradeEngine.h test/test.cpp test/test.h)
+add_executable(OrderMatchingEngine source/main.cpp source/User.cpp source/User.h source/Order.cpp source/Order.h source/Trade.cpp source/Trade.h source/TradeEngine.cpp source/TradeEngine.h test/test.cpp test/test.h test/testConcurrency.h test/testConcurrency.cpp)

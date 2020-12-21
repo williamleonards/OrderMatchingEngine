@@ -5,6 +5,10 @@
 #ifndef TRADEMATCHER_TEST_H
 #define TRADEMATCHER_TEST_H
 
+using namespace std;
+
+#include <pthread.h>
+
 class test {
 public:
     static void runAllTests();

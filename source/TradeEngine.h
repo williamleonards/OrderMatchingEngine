@@ -13,6 +13,7 @@ using namespace std;
 #include<list>
 #include<unordered_map>
 #include<map>
+#include<pthread.h>
 
 #include "Order.h"
 #include "Trade.h"
@@ -55,7 +56,15 @@ public:
 
     // Gets the sell history of the user with id `userID`. Returns a vector of trades involving the user as the seller.
     vector<Trade*>* getSellTrades(int userID);
+
+    /* Gets the total volume in the entire system: sum of volumes in buy and sell tree,
+     * as well as the total volume of trades (this is double counted). Excludes deleted volumes.
+     * Only used for concurrency tests. */
+    long long getTotalVolume();
 private:
+    pthread_mutex_t usersLock;
+    pthread_mutex_t buyLock;
+    pthread_mutex_t sellLock;
     unordered_map<int, User*> users;
     int nextUserID;
 

@@ -5,6 +5,10 @@
 #include "test.h"
 #include "../source/TradeEngine.h"
 
+const vector<pair<int, int>> EMPTY_TREE;
+const vector<Trade*> EMPTY_TRADES;
+const vector<Order*> EMPTY_ORDERS;
+
 void test::runAllTests() {
     test::testInit();
     test::testInitUser();
@@ -18,30 +22,26 @@ void test::runAllTests() {
 }
 void test::testInit() {
     TradeEngine *t = new TradeEngine();
-    vector<pair<int, int>> empty;
-    assert(t->getPendingBuys() == empty);
-    assert(t->getPendingSells() == empty);
+    assert(t->getPendingBuys() == EMPTY_TREE);
+    assert(t->getPendingSells() == EMPTY_TREE);
     cout << "testInit passed" << endl;
     delete t;
 }
 void test::testInitUser() {
     TradeEngine *t = new TradeEngine();
     int amyID = t->createUser("Amy");
-    vector<Trade*> empty;
-    vector<Order*> empty2;
-    assert(*(t->getBuyTrades(amyID)) == empty);
-    assert(*(t->getSellTrades(amyID)) == empty);
-    assert(t->getPendingOrders(amyID) == empty2);
+    assert(*(t->getBuyTrades(amyID)) == EMPTY_TRADES);
+    assert(*(t->getSellTrades(amyID)) == EMPTY_TRADES);
+    assert(t->getPendingOrders(amyID) == EMPTY_ORDERS);
     cout << "testInitUser passed" << endl;
     delete t;
 }
 void test::testSingleUser() {
     TradeEngine *t = new TradeEngine();
     int amyID = t->createUser("Amy");
-    vector<Trade*> empty;
-    assert(t->placeBuyOrder(amyID, 3, 10) == empty);
-    assert(t->placeBuyOrder(amyID, 7, 5) == empty);
-    assert(t->placeBuyOrder(amyID, 10, 5) == empty);
+    assert(t->placeBuyOrder(amyID, 3, 10) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(amyID, 7, 5) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(amyID, 10, 5) == EMPTY_TRADES);
     vector<Order*> expectedOrders;
     expectedOrders.push_back(new Order(true, 10, 3, amyID, 0));
     expectedOrders.push_back(new Order(true, 5, 7, amyID, 1));
@@ -62,11 +62,10 @@ void test::testSingleUser() {
 void test::testSingleDelete() {
     TradeEngine *t = new TradeEngine();
     int amyID = t->createUser("Amy");
-    vector<Trade*> empty;
-    assert(t->placeBuyOrder(amyID, 3, 10) == empty);
-    assert(t->placeBuyOrder(amyID,7, 5) == empty);
-    assert(t->placeBuyOrder(amyID,12, 3) == empty);
-    assert(t->placeSellOrder(amyID,15, 5) == empty);
+    assert(t->placeBuyOrder(amyID, 3, 10) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(amyID,7, 5) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(amyID,12, 3) == EMPTY_TRADES);
+    assert(t->placeSellOrder(amyID,15, 5) == EMPTY_TRADES);
     t->deleteOrder(amyID, 2);
     vector<Order*> expectedOrders;
     expectedOrders.push_back(new Order(true, 10, 3, amyID, 0));
@@ -96,19 +95,18 @@ void test::testDeleteAfterTrade() {
     int amyID = t->createUser("Amy");
     int bobID = t->createUser("Bob");
     int johnID = t->createUser("John");
-    vector<Trade*> empty;
     vector<Trade*> expected;
     expected.push_back(new Trade(7, 7, bobID, amyID));
-    assert(t->placeSellOrder(amyID, 7, 10) == empty);
+    assert(t->placeSellOrder(amyID, 7, 10) == EMPTY_TRADES);
     assert(t->placeBuyOrder(bobID, 7, 7)[0]->equals(expected[0]));
 
     delete expected[0];
     expected.clear();
     t->deleteOrder(amyID, 0);
 
-    assert(t->placeSellOrder(amyID, 8, 5) == empty);
-    assert(t->placeSellOrder(johnID, 9, 1) == empty);
-    assert(t->placeSellOrder(amyID, 9, 1) == empty);
+    assert(t->placeSellOrder(amyID, 8, 5) == EMPTY_TRADES);
+    assert(t->placeSellOrder(johnID, 9, 1) == EMPTY_TRADES);
+    assert(t->placeSellOrder(amyID, 9, 1) == EMPTY_TRADES);
 
     vector<Trade*> bobTrades = t->placeBuyOrder(bobID,10, 10);
     expected.push_back(new Trade(5, 8, bobID, amyID));
@@ -131,12 +129,11 @@ void test::testBuyOut() {
     int amyID = t->createUser("Amy");
     int bobID = t->createUser("Bob");
     int johnID = t->createUser("John");
-    vector<Trade*> empty;
     vector<Trade*> expected;
-    assert(t->placeSellOrder(johnID, 9, 1) == empty);
-    assert(t->placeSellOrder(amyID, 7, 10) == empty);
-    assert(t->placeSellOrder(amyID, 8, 5) == empty);
-    assert(t->placeSellOrder(amyID, 9, 1) == empty);
+    assert(t->placeSellOrder(johnID, 9, 1) == EMPTY_TRADES);
+    assert(t->placeSellOrder(amyID, 7, 10) == EMPTY_TRADES);
+    assert(t->placeSellOrder(amyID, 8, 5) == EMPTY_TRADES);
+    assert(t->placeSellOrder(amyID, 9, 1) == EMPTY_TRADES);
 
     vector<Trade*> bobTrades = t->placeBuyOrder(bobID,10, 20);
     expected.push_back(new Trade(10, 7, bobID, amyID));
@@ -160,12 +157,11 @@ void test::testSellOut() {
     int amyID = t->createUser("Amy");
     int bobID = t->createUser("Bob");
     int johnID = t->createUser("John");
-    vector<Trade*> empty;
     vector<Trade*> expected;
-    assert(t->placeBuyOrder(amyID, 7, 10) == empty);
-    assert(t->placeBuyOrder(amyID, 8, 5) == empty);
-    assert(t->placeBuyOrder(johnID, 9, 1) == empty);
-    assert(t->placeBuyOrder(amyID, 9, 1) == empty);
+    assert(t->placeBuyOrder(amyID, 7, 10) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(amyID, 8, 5) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(johnID, 9, 1) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(amyID, 9, 1) == EMPTY_TRADES);
 
     vector<Trade*> bobTrades = t->placeSellOrder(bobID, 6, 20);
     expected.push_back(new Trade(1, 9, johnID, bobID));
@@ -190,13 +186,12 @@ void test::testAll() {
     int bobID = t->createUser("Bob");
     int johnID = t->createUser("John");
     int samID = t->createUser("Sam");
-    vector<Trade*> empty;
     vector<Trade*> expected;
-    assert(t->placeBuyOrder(amyID, 7, 10) == empty);
-    assert(t->placeBuyOrder(amyID, 8, 5) == empty);
-    assert(t->placeBuyOrder(johnID, 9, 1) == empty);
-    assert(t->placeBuyOrder(amyID, 9, 1) == empty);
-    assert(t->placeBuyOrder(samID, 5, 3) == empty);
+    assert(t->placeBuyOrder(amyID, 7, 10) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(amyID, 8, 5) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(johnID, 9, 1) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(amyID, 9, 1) == EMPTY_TRADES);
+    assert(t->placeBuyOrder(samID, 5, 3) == EMPTY_TRADES);
 
     vector<Trade*> bobTrades = t->placeSellOrder(bobID, 6, 20);
     expected.push_back(new Trade(1, 9, johnID, bobID));
@@ -224,14 +219,13 @@ void test::testAll() {
 void test::stressTest() {
     TradeEngine *t = new TradeEngine();
 
-    vector<Trade*> empty;
     vector<Trade*> expected;
 
     int bigBuyerID = t->createUser("bigBuyer");
 
     for (int i = 1; i <= 100000; i++) {
         int userID = t->createUser(to_string(i));
-        assert(t->placeSellOrder(userID, i, 1) == empty);
+        assert(t->placeSellOrder(userID, i, 1) == EMPTY_TRADES);
     }
 
     for (int i = 1; i <= 100000; i++) {
