@@ -191,6 +191,9 @@ void* evenUsers(void* arg) {
             t->getSellTrades(i);
             t->getPendingOrders(i);
         }
+//        if (i % 20 == 0) { // delete some of the buy requests
+//            t->deleteOrder(i, 0);
+//        }
     }
 }
 void* oddUsers(void* arg) {
@@ -202,18 +205,37 @@ void* oddUsers(void* arg) {
             t->getSellTrades(i);
             t->getPendingOrders(i);
         }
+//        if ((i-1) % 20 == 0) { // delete some of the sell requests
+//            t->deleteOrder(i, 0);
+//        }
     }
 }
 void* observeBuyTree(void* arg) {
     TradeEngine *t = (TradeEngine *) arg;
-    for (int i = 1; i < 50; i++) {
+    for (int i = 0; i < 50; i++) {
         t->getPendingBuys();
     }
 }
 void* observeSellTree(void* arg) {
     TradeEngine *t = (TradeEngine *) arg;
-    for (int i = 1; i < 50; i++) {
+    for (int i = 0; i < 50; i++) {
         t->getPendingSells();
+    }
+}
+void* placeOrderAndDeleteEven(void* arg) {
+    TradeEngine *t = (TradeEngine *) arg;
+    for (int i = 0; i < 50; i+=2) {
+        int userID = t->createUser("user");
+        t->placeBuyOrder(userID, 0, 10);
+        t->deleteOrder(userID, 0);
+    }
+}
+void* placeOrderAndDeleteOdd(void* arg) {
+    TradeEngine *t = (TradeEngine *) arg;
+    for (int i = 1; i < 50; i+=2) {
+        int userID = t->createUser("user");
+        t->placeSellOrder(userID, 501, 10);
+        t->deleteOrder(userID, 0);
     }
 }
 void testConcurrency::testAllOperationsConcurrently() {
@@ -225,16 +247,22 @@ void testConcurrency::testAllOperationsConcurrently() {
     pthread_t oddUsersThread;
     pthread_t buyTreeObserver;
     pthread_t sellTreeObserver;
+    pthread_t oddPlaceAndDeleteThread;
+    pthread_t evenPlaceAndDeleteThread;
 
     pthread_create(&evenUsersThread, NULL, &evenUsers, (void *) t);
     pthread_create(&oddUsersThread, NULL, &oddUsers, (void *) t);
     pthread_create(&buyTreeObserver, NULL, &observeBuyTree, (void *) t);
     pthread_create(&sellTreeObserver, NULL, &observeSellTree, (void *) t);
+    pthread_create(&evenPlaceAndDeleteThread, NULL, &placeOrderAndDeleteEven, (void *) t);
+    pthread_create(&oddPlaceAndDeleteThread, NULL, &placeOrderAndDeleteOdd, (void *) t);
 
     pthread_join(evenUsersThread, NULL);
     pthread_join(oddUsersThread, NULL);
     pthread_join(buyTreeObserver, NULL);
     pthread_join(sellTreeObserver, NULL);
+    pthread_join(evenPlaceAndDeleteThread, NULL);
+    pthread_join(oddPlaceAndDeleteThread, NULL);
 
     cout << "testAllOperationsConcurrently passed" << endl;
 
