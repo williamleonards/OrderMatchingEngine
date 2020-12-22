@@ -66,4 +66,9 @@ testSellOut passed
 testAll passed
 stressTest passed
 testTwoThreads passed
+testFourThreads passed
+testVariableVol passed
+testVariablePrice passed
+testDepletingOrder passed
+testAllOperationsConcurrently passed
 ```
