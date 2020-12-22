@@ -263,6 +263,7 @@ void TradeEngine::consumePendingOrders(bool buyOrSell, int &issuerID, int &remai
         int sellerID = buyOrSell ? counterpartyID : issuerID;
         User *buyer = users[buyerID];
         User *seller = users[sellerID];
+        User *counterparty = users[counterpartyID];
 
         if (remaining < currAmt) { // current order not finished
             Trade *trade = new Trade(remaining, currPrice, buyerID, sellerID);
@@ -281,8 +282,8 @@ void TradeEngine::consumePendingOrders(bool buyOrSell, int &issuerID, int &remai
             buyer->getBought()->push_back(trade);
             seller->getSold()->push_back(trade);
             orders->pop_front();
-            // update seller's orders
-            seller->getOrders()->erase(first->getID());
+            // update counterparty's orders
+            counterparty->getOrders()->erase(first->getID());
             delete first;
             remaining -= currAmt;
             amtLeft -= currAmt;
