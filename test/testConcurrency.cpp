@@ -191,9 +191,6 @@ void* evenUsers(void* arg) {
             t->getSellTrades(i);
             t->getPendingOrders(i);
         }
-//        if (i % 20 == 0) { // delete some of the buy requests
-//            t->deleteOrder(i, 0);
-//        }
     }
 }
 void* oddUsers(void* arg) {
@@ -205,9 +202,6 @@ void* oddUsers(void* arg) {
             t->getSellTrades(i);
             t->getPendingOrders(i);
         }
-//        if ((i-1) % 20 == 0) { // delete some of the sell requests
-//            t->deleteOrder(i, 0);
-//        }
     }
 }
 void* observeBuyTree(void* arg) {
