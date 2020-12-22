@@ -12,11 +12,17 @@ using namespace std;
 class testConcurrency {
 public:
     static void runAllTests();
+
     static void testTwoThreads();
+
     static void testFourThreads();
+
     static void testVariableVol();
+
     static void testVariablePrice();
+
     static void testDepletingOrder();
+
     static void testAllOperationsConcurrently();
 };
 

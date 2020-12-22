@@ -18,13 +18,18 @@ using namespace std;
 class Trade {
 public:
     Trade(int amt_, int price_, int buyerID_, int sellerID_);
+
     int getAmt();
+
     int getPrice();
+
     int getBuyerID();
+
     int getSellerID();
 
     // Logical equals: return true if other != NULL and all the corresponding fields are equal
     bool equals(Trade *other);
+
 private:
     int amt;
     int price;

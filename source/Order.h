@@ -18,11 +18,17 @@ class User;
 class Order {
 public:
     Order(bool type_, int amt_, int price_, int issuerID_, int id_);
+
     bool getType();
+
     int getID();
+
     int getIssuerID();
+
     int getAmt();
+
     void setAmt(int amt_);
+
     int getPrice();
 
     // Checks if the order is stale (i.e., has been deleted by the deleteOrder command).
@@ -35,6 +41,7 @@ public:
     bool equals(Order *other);
 
     void print();
+
 private:
     bool type; // true = buy, false = sell
     int id;

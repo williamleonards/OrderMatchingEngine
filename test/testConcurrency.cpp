@@ -6,8 +6,8 @@
 #include "../source/TradeEngine.h"
 
 const vector<pair<int, int>> EMPTY_TREE;
-const vector<Trade*> EMPTY_TRADES;
-const vector<Order*> EMPTY_ORDERS;
+const vector<Trade *> EMPTY_TRADES;
+const vector<Order *> EMPTY_ORDERS;
 
 void testConcurrency::runAllTests() {
     testConcurrency::testTwoThreads();
@@ -29,20 +29,23 @@ void enforceEmptyTrees(TradeEngine *t) {
 void enforceVolumeInvariant(TradeEngine *t, long long expectedVol) {
     assert(t->getTotalVolume() == expectedVol);
 }
-void* submitBuys(void* arg) {
+
+void *submitBuys(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
     for (int i = 0; i < 100000; i++) {
         int buyerID = t->createUser("buyer" + to_string(i));
         t->placeBuyOrder(buyerID, 10, 1);
     }
 }
-void* submitSells(void* arg) {
+
+void *submitSells(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
     for (int i = 0; i < 100000; i++) {
         int sellerID = t->createUser("seller" + to_string(i));
         t->placeSellOrder(sellerID, 10, 1);
     }
 }
+
 void testConcurrency::testTwoThreads() {
     TradeEngine *t = new TradeEngine();
 
@@ -62,6 +65,7 @@ void testConcurrency::testTwoThreads() {
 
     delete t;
 }
+
 void testConcurrency::testFourThreads() {
     TradeEngine *t = new TradeEngine();
 
@@ -87,20 +91,23 @@ void testConcurrency::testFourThreads() {
 
     delete t;
 }
-void* submitBuysVariableVol(void* arg) {
+
+void *submitBuysVariableVol(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
     for (int i = 0; i < 10000; i++) {
         int buyerID = t->createUser("buyer" + to_string(i));
-        t->placeBuyOrder(buyerID, 10, i+1);
+        t->placeBuyOrder(buyerID, 10, i + 1);
     }
 }
-void* submitSellsVariableVol(void* arg) {
+
+void *submitSellsVariableVol(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
     for (int i = 0; i < 10000; i++) {
         int sellerID = t->createUser("seller" + to_string(i));
-        t->placeSellOrder(sellerID, 10, i+1);
+        t->placeSellOrder(sellerID, 10, i + 1);
     }
 }
+
 void testConcurrency::testVariableVol() {
     TradeEngine *t = new TradeEngine();
 
@@ -120,20 +127,23 @@ void testConcurrency::testVariableVol() {
 
     delete t;
 }
-void* submitBuysVariablePrice(void* arg) {
+
+void *submitBuysVariablePrice(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
     for (int i = 0; i < 1000; i++) {
         int buyerID = t->createUser("buyer" + to_string(i));
-        t->placeBuyOrder(buyerID, i+1, 1);
+        t->placeBuyOrder(buyerID, i + 1, 1);
     }
 }
-void* submitSellsVariablePrice(void* arg) {
+
+void *submitSellsVariablePrice(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
     for (int i = 0; i < 1000; i++) {
         int sellerID = t->createUser("seller" + to_string(i));
-        t->placeSellOrder(sellerID, i+1, 1);
+        t->placeSellOrder(sellerID, i + 1, 1);
     }
 }
+
 void testConcurrency::testVariablePrice() {
     TradeEngine *t = new TradeEngine();
 
@@ -152,11 +162,13 @@ void testConcurrency::testVariablePrice() {
 
     delete t;
 }
-void* submitDepletingOrder(void* arg) {
+
+void *submitDepletingOrder(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
     int buyerID = t->createUser("buyer");
     t->placeBuyOrder(buyerID, 1000, 1000);
 }
+
 void testConcurrency::testDepletingOrder() {
     TradeEngine *t = new TradeEngine();
 
@@ -176,16 +188,18 @@ void testConcurrency::testDepletingOrder() {
 
     delete t;
 }
-void* createUsers(void* arg) {
+
+void *createUsers(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
     for (int i = 0; i <= 500; i++) {
         t->createUser("user" + to_string(i));
     }
 }
-void* evenUsers(void* arg) {
+
+void *evenUsers(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
-    for (int i = 0; i < 500; i+=2) {
-        t->placeBuyOrder(i, i+1, i+1);
+    for (int i = 0; i < 500; i += 2) {
+        t->placeBuyOrder(i, i + 1, i + 1);
         if (i % 30 == 0) { // sometimes, check user trades and orders
             t->getBuyTrades(i);
             t->getSellTrades(i);
@@ -196,32 +210,36 @@ void* evenUsers(void* arg) {
         }
     }
 }
-void* oddUsers(void* arg) {
+
+void *oddUsers(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
-    for (int i = 1; i < 500; i+=2) {
-        t->placeSellOrder(i, i+1, i+1);
-        if ((i-1) % 30 == 0) { // sometimes, check user trades and orders
+    for (int i = 1; i < 500; i += 2) {
+        t->placeSellOrder(i, i + 1, i + 1);
+        if ((i - 1) % 30 == 0) { // sometimes, check user trades and orders
             t->getBuyTrades(i);
             t->getSellTrades(i);
             t->getPendingOrders(i);
         }
-        if ((i-1) % 20 == 0) { // delete some of the sell requests
+        if ((i - 1) % 20 == 0) { // delete some of the sell requests
             t->deleteOrder(i, 0);
         }
     }
 }
-void* observeBuyTree(void* arg) {
+
+void *observeBuyTree(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
     for (int i = 0; i < 50; i++) {
         t->getPendingBuys();
     }
 }
-void* observeSellTree(void* arg) {
+
+void *observeSellTree(void *arg) {
     TradeEngine *t = (TradeEngine *) arg;
     for (int i = 0; i < 50; i++) {
         t->getPendingSells();
     }
 }
+
 void testConcurrency::testAllOperationsConcurrently() {
     TradeEngine *t = new TradeEngine();
 
